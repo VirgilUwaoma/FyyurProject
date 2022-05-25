@@ -1,0 +1,10 @@
+babel
+python-dateutil
+flask-moment
+flask-wtf
+flask_sqlalchemy
+virtualenv
+SQLAlchemy
+postgres
+Flask
+Flask-Migrate
