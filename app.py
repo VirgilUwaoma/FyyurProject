@@ -13,6 +13,7 @@ from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
 from flask_migrate import Migrate
+import datetime as dt
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -44,7 +45,7 @@ class Venue(db.Model):
     website_link = db.Column(db.String(120))
     seeking_talent = db.Column(db.Boolean, nullable=False, default=False)
     seeking_description = db.Column(db.String(500), nullable=False)
-    shows = db.relationship('Show', backref='venue', lazy=True, cascade="all, delete, delete-orphan")
+    shows = db.relationship('Show', backref='venue', lazy=True, cascade="all, delete")
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -62,7 +63,7 @@ class Artist(db.Model):
     website_link = db.Column(db.String(120))
     seeking_venue = db.Column(db.Boolean, nullable=False, default=False)
     seeking_description = db.Column(db.String(500), nullable=False)
-    shows = db.relationship('Show', backref='artist', lazy=True, cascade="all, delete, delete-orphan")
+    shows = db.relationship('Show', backref='artist', lazy=True, cascade="all, delete")
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -72,9 +73,9 @@ class Show(db.Model):
   __tablename__ = 'shows'
 
   id = db.Column(db.Integer, primary_key=True)
-  artist_id = db.Column(db.Integer, db.ForeignKey('artists.id'), nullable=False)
-  venue_id = db.Column(db.Integer, db.ForeignKey('venues.id'), nullable=False)
-  start_time = db.Column(db.DateTime, nullable=False)
+  artist_id = db.Column(db.Integer, db.ForeignKey('artists.id', ondelete="CASCADE"), nullable=False)
+  venue_id = db.Column(db.Integer, db.ForeignKey('venues.id', ondelete="CASCADE"), nullable=False)
+  start_time = db.Column(db.DateTime, nullable=False)  
 
 
 #----------------------------------------------------------------------------#
@@ -189,6 +190,8 @@ def show_venue(venue_id):
   # }
   # 
 
+  today = dt.datetime.now()
+  shows = Show.query.filter(Show.venue_id==venue_id).order_by('venue_id')
   venue = Venue.query.get(venue_id)
   data={
     "id": venue.id,
@@ -204,10 +207,24 @@ def show_venue(venue_id):
     "image_link":venue.image_link,
     "past_shows": [],
     "upcoming_shows": [],
-    "past_shows_count": 1,
-    "upcoming_shows_count": 1,
+    "past_shows_count": 0,
+    "upcoming_shows_count": 0,
   }
 
+  for show in shows:
+    details = {
+    "artist_id": show.artist_id,
+    "artist_name": show.artist.name,
+    "artist_image_link": show.artist.image_link,
+    "start_time": show.start_time.strftime('%A %Y-%B-%-dT%H:%m:%S.000Z')
+    }
+    if show.start_time < today:
+      data['past_shows'].append(details)
+      data['past_shows_count'] += 1
+    else:
+      data['upcoming_shows'].append(details)
+      data['upcoming_shows_count'] +=1
+    
   return render_template('pages/show_venue.html', venue=data)
 
 #  Create Venue
@@ -386,9 +403,11 @@ def show_artist(artist_id):
   #   "past_shows_count": 0,
   #   "upcoming_shows_count": 3,
   # }
-  # data = list(filter(lambda d: d['id'] == artist_id, [data1, data2, data3]))[0]
+  # data = list(filter(lambda d: d['id'] == artist_id, [data3]))[0]
+  today = dt.datetime.now()
   artist = Artist.query.get(artist_id)
-
+  shows = Show.query.filter(Show.artist_id==artist_id).order_by('venue_id')
+  
   data={
     "id": artist.id,
     "name": artist.name,
@@ -398,14 +417,28 @@ def show_artist(artist_id):
     "phone": artist.phone,
     "seeking_venue": artist.seeking_venue,
     "seeking_description":artist.seeking_description,
-    "website_link":artist.website_link,
+    "website":artist.website_link,
     "facebook_link":artist.facebook_link,
     "image_link":artist.image_link,
     "past_shows": [],
     "upcoming_shows": [],
-    "past_shows_count": 1,
-    "upcoming_shows_count": 1,
+    "past_shows_count": 0,
+    "upcoming_shows_count": 0,
   }
+  for show in shows:
+    details = {
+    "venue_id": show.venue_id,
+    "venue_name": show.venue.name,
+    "venue_image_link": show.venue.image_link,
+    "start_time": show.start_time.strftime('%A %Y-%B-%-dT%H:%m:%S.000Z')
+    }
+    if show.start_time < today:
+      data['past_shows'].append(details)
+      data['past_shows_count'] += 1
+    else:
+      data['upcoming_shows'].append(details)
+      data['upcoming_shows_count'] +=1
+    
 
   return render_template('pages/show_artist.html', artist=data)
 
