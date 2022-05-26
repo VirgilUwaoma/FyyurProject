@@ -4,3 +4,4 @@ node_modules
 package.json
 Package-lock.json
 .DS_Store
+requirements.txt

@@ -36,7 +36,7 @@ def upgrade():
     op.alter_column('artists', 'image_link',
                existing_type=sa.VARCHAR(length=500),
                nullable=False)
-    op.add_column('venues', sa.Column('genres', sa.String(length=120), nullable=False))
+    op.add_column('venues', sa.Column('genres', sa.PickleType(), nullable=False))
     op.add_column('venues', sa.Column('website_link', sa.String(length=120), nullable=True))
     op.add_column('venues', sa.Column('seeking_talent', sa.Boolean(), nullable=False))
     op.add_column('venues', sa.Column('seeking_description', sa.String(length=500), nullable=False))
