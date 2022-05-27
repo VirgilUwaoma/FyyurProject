@@ -5,6 +5,7 @@ from flask_wtf import Form
 from wtforms import StringField, SelectField, SelectMultipleField, DateTimeField, BooleanField
 from wtforms.validators import DataRequired, AnyOf, URL, Regexp, ValidationError
 from enum import Enum
+import phonenumbers
 import re
 
 class Genres(Enum):
@@ -34,10 +35,15 @@ def genreChoices(genres):
         choices.append((genre.name, genre.value))
     return choices
 
-def validate_phone(form, field):
-    if not re.search('^\d{3}-\d{3}-\d{4}$', field.data):
-        raise ValidationError('phone number should match pattern xxx-xxx-xxxx')
-
+def validate_phone(field):
+    if len(field.data) != 10:
+        raise ValidationError('Invalid phone number.')
+    try:
+        input_number = phonenumbers.parse(field.data)
+        if not (phonenumbers.is_valid_number(input_number)):
+            raise ValidationError('Invalid phone number.')
+    except:
+        return
 
 class ShowForm(Form):
     artist_id = StringField(
@@ -119,13 +125,12 @@ class VenueForm(Form):
         'address', validators=[DataRequired()]
     )
     phone = StringField(
-        'phone', validators = [validate_phone]
+        'phone', validators = [DataRequired(), validate_phone]
     )
     image_link = StringField(
         'image_link'
     )
     genres = SelectMultipleField(
-        # TODO implement enum restriction
         'genres', validators=[DataRequired()],
         choices = genreChoices(Genres)
     )
@@ -208,8 +213,8 @@ class ArtistForm(Form):
         ]
     )
     phone = StringField(
-        # TODO implement validation logic for phone 
-        'phone', validators = [validate_phone]
+        
+        'phone', validators = [DataRequired(), validate_phone]
     )
     image_link = StringField(
         'image_link'
@@ -219,7 +224,7 @@ class ArtistForm(Form):
         choices = genreChoices(Genres)
      )
     facebook_link = StringField(
-        # TODO implement enum restriction
+        
         'facebook_link', validators=[URL()]
      )
 
