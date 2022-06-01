@@ -64,7 +64,7 @@ The starter codes use an interactive form builder library called [Flask-WTF](htt
 
 2. **Create an empty repository in your Github account online.
 
-3. **Initialize and activate a virtualenv using:**
+3. **Initialize and activate a virtualenv**
 
 4. **Install the dependencies:**
 ```
